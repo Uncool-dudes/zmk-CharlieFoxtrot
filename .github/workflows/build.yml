@@ -24,10 +24,8 @@ jobs:
         name: Fetch Build Matrix
         run: |
           matrix=$(yaml2json build.yaml | jq -c .)
-          echo "matrix=$matrix" >> $GITHUB_ENV
-        env:
-          matrix: ${{ steps.set-matrix.outputs.matrix }}
-  
+          echo "::set-output name=matrix::${matrix}"
+
   build:
     runs-on: ubuntu-latest
     container:
@@ -36,7 +34,8 @@ jobs:
     name: Build
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - name: Prepare variables
         id: variables
@@ -46,7 +45,7 @@ jobs:
             ARTIFACT_NAME="${{ matrix.shield }}-${{ matrix.board }}-zmk"
             DISPLAY_NAME="${{ matrix.shield }} - ${{ matrix.board }}"
           else
-            EXTRA_CMAKE_ARGS=
+            EXTRA_CMAKE_ARGS=""
             DISPLAY_NAME="${{ matrix.board }}"
             ARTIFACT_NAME="${{ matrix.board }}-zmk"
           fi
